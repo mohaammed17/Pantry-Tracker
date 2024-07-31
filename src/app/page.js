@@ -41,7 +41,7 @@ import {
   ListItemText,
   Snackbar,
 } from '@mui/material';
-import { Add, Remove, Delete, Edit, Visibility, GetApp, Menu as MenuIcon } from '@mui/icons-material';
+import { Add, Remove, Delete, Edit, Visibility, GetApp, Menu as MenuIcon, CameraAlt } from '@mui/icons-material';
 import { firestore, auth } from './firebase'; // Adjust the path if necessary
 import {
   collection,
@@ -57,6 +57,7 @@ import {
   signOut,
   onAuthStateChanged,
 } from 'firebase/auth';
+import CameraCapture from './CameraCapture';
 
 const theme = createTheme({
   palette: {
@@ -127,6 +128,7 @@ export default function Home() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [cameraOpen, setCameraOpen] = useState(false);
 
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -320,6 +322,20 @@ export default function Home() {
 
   const handleSnackbarClose = () => {
     setSnackbarOpen(false);
+  };
+
+  const handleCameraOpen = () => {
+    setCameraOpen(true);
+  };
+
+  const handleCameraClose = () => {
+    setCameraOpen(false);
+  };
+
+  const handleCapture = (image) => {
+    console.log('Captured image:', image);
+    handleCameraClose();
+    // Process the captured image as needed
   };
 
   const filteredInventory = inventory
@@ -527,6 +543,9 @@ export default function Home() {
                 </Button>
                 <Button variant="contained" onClick={exportToCSV} startIcon={<GetApp />} sx={{ minWidth: 150 }}>
                   Export to CSV
+                </Button>
+                <Button variant="contained" onClick={handleCameraOpen} startIcon={<CameraAlt />} sx={{ minWidth: 150 }}>
+                  Capture Image
                 </Button>
               </Stack>
               <TableContainer component={Paper} sx={{ borderRadius: 3, mt: 3, width: '100%' }}>
@@ -772,6 +791,19 @@ export default function Home() {
             <Button onClick={handleViewClose} color="primary">Close</Button>
           </DialogActions>
         </Dialog>
+        <Modal
+          open={cameraOpen}
+          onClose={handleCameraClose}
+          aria-labelledby="camera-modal-title"
+          aria-describedby="camera-modal-description"
+        >
+          <Box sx={style}>
+            <Typography id="camera-modal-title" variant="h6" component="h2">
+              Capture Image
+            </Typography>
+            <CameraCapture onCapture={handleCapture} />
+          </Box>
+        </Modal>
         <Snackbar
           open={snackbarOpen}
           autoHideDuration={6000}
@@ -782,4 +814,3 @@ export default function Home() {
     </ThemeProvider>
   );
 }
-
