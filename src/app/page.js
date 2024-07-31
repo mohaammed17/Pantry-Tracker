@@ -34,8 +34,13 @@ import {
   DialogContent,
   DialogActions,
   Grid,
+  useMediaQuery,
+  Drawer,
+  List,
+  ListItem,
+  ListItemText,
 } from '@mui/material';
-import { Add, Remove, Delete, Edit, Visibility, GetApp } from '@mui/icons-material';
+import { Add, Remove, Delete, Edit, Visibility, GetApp, Menu as MenuIcon } from '@mui/icons-material';
 import { firestore, auth } from './firebase'; // Adjust the path if necessary
 import {
   collection,
@@ -115,6 +120,9 @@ export default function Home() {
   const [page, setPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [error, setError] = useState('');
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   useEffect(() => {
     setIsClient(true);
@@ -286,6 +294,10 @@ export default function Home() {
     }
   };
 
+  const toggleDrawer = () => {
+    setDrawerOpen(!drawerOpen);
+  };
+
   const filteredInventory = inventory
     .filter(item => {
       return (
@@ -333,10 +345,15 @@ export default function Home() {
       <Box width="100vw" minHeight="100vh" display="flex" flexDirection="column" bgcolor="background.default">
         <AppBar position="static">
           <Toolbar>
+            {isMobile && (
+              <IconButton color="inherit" edge="start" onClick={toggleDrawer}>
+                <MenuIcon />
+              </IconButton>
+            )}
             <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
               Pantry Management
             </Typography>
-            {user ? (
+            {!isMobile && user && (
               <>
                 <Button color="inherit" onClick={handleMenuOpen}>
                   Account
@@ -345,7 +362,8 @@ export default function Home() {
                   <MenuItem onClick={handleSignOut}>Sign Out</MenuItem>
                 </Menu>
               </>
-            ) : (
+            )}
+            {!isMobile && !user && (
               <Grid container spacing={1}>
                 <Grid item xs={12} sm={4}>
                   <TextField
@@ -389,6 +407,58 @@ export default function Home() {
             )}
           </Toolbar>
         </AppBar>
+        {isMobile && (
+          <Drawer anchor="left" open={drawerOpen} onClose={toggleDrawer}>
+            <Box sx={{ width: 250 }}>
+              <List>
+                {user ? (
+                  <>
+                    <ListItem button onClick={handleSignOut}>
+                      <ListItemText primary="Sign Out" />
+                    </ListItem>
+                  </>
+                ) : (
+                  <>
+                    <ListItem>
+                      <TextField
+                        id="email"
+                        label="Email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        margin="normal"
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                        sx={{ bgcolor: 'background.paper' }}
+                      />
+                    </ListItem>
+                    <ListItem>
+                      <TextField
+                        id="password"
+                        label="Password"
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        margin="normal"
+                        variant="outlined"
+                        size="small"
+                        fullWidth
+                        sx={{ bgcolor: 'background.paper' }}
+                      />
+                    </ListItem>
+                    <ListItem button onClick={handleSignIn}>
+                      <ListItemText primary="Sign In" />
+                    </ListItem>
+                    <ListItem button onClick={handleSignUp}>
+                      <ListItemText primary="Sign Up" />
+                    </ListItem>
+                  </>
+                )}
+              </List>
+            </Box>
+          </Drawer>
+        )}
         <Container sx={{ mt: 4, mb: 4 }}>
           {user ? (
             <Box display="flex" justifyContent="center" alignItems="center" flexDirection="column" gap={2}>
