@@ -1,12 +1,15 @@
 import React, { useRef, useState } from 'react';
 import { Camera } from 'react-camera-pro';
-import { Button, Box, Typography } from '@mui/material';
+import { Button, Box, Typography, IconButton } from '@mui/material';
+import { FlipCameraAndroid } from '@mui/icons-material';
 import axios from 'axios';
 
 const CameraCapture = ({ onCapture }) => {
   const camera = useRef(null);
   const [image, setImage] = useState(null);
   const [labels, setLabels] = useState([]);
+  const [numberOfCameras, setNumberOfCameras] = useState(0);
+  const [currentCamera, setCurrentCamera] = useState(0);
 
   const takePicture = async () => {
     const picture = camera.current.takePhoto();
@@ -29,10 +32,19 @@ const CameraCapture = ({ onCapture }) => {
     }
   };
 
+  const switchCamera = () => {
+    setCurrentCamera((prevCamera) => (prevCamera + 1) % numberOfCameras);
+  };
+
   return (
     <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center">
-      <Camera ref={camera} />
-      <Button variant="contained" onClick={takePicture} sx={{ mt: 2 }}>Take Picture</Button>
+      <Camera ref={camera} facingMode={currentCamera} numberOfCamerasCallback={setNumberOfCameras} />
+      <Box mt={2} display="flex" flexDirection="column" alignItems="center">
+        <IconButton onClick={switchCamera} aria-label="switch camera">
+          <FlipCameraAndroid />
+        </IconButton>
+        <Button variant="contained" onClick={takePicture} sx={{ mt: 2 }}>Take Picture</Button>
+      </Box>
       {image && <img src={image} alt="Captured" style={{ marginTop: '20px', maxWidth: '100%' }} />}
       {labels.length > 0 && (
         <Box mt={2}>
