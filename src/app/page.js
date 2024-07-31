@@ -39,6 +39,7 @@ import {
   List,
   ListItem,
   ListItemText,
+  Snackbar,
 } from '@mui/material';
 import { Add, Remove, Delete, Edit, Visibility, GetApp, Menu as MenuIcon } from '@mui/icons-material';
 import { firestore, auth } from './firebase'; // Adjust the path if necessary
@@ -76,6 +77,9 @@ const theme = createTheme({
     },
     body1: {
       fontSize: '1.1rem',
+    },
+    button: {
+      fontSize: '1rem',
     },
   },
 });
@@ -121,6 +125,8 @@ export default function Home() {
   const [totalItems, setTotalItems] = useState(0);
   const [error, setError] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -166,6 +172,8 @@ export default function Home() {
         await setDoc(docRef, { ...item, quantity: 1 });
       }
       setError('');
+      setSnackbarMessage('Item added successfully');
+      setSnackbarOpen(true);
       await updateInventory(user.uid);
     } catch (error) {
       console.error('Error adding item:', error);
@@ -186,6 +194,8 @@ export default function Home() {
           await setDoc(docRef, { ...item, quantity: quantity - 1 });
         }
       }
+      setSnackbarMessage('Item removed successfully');
+      setSnackbarOpen(true);
       await updateInventory(user.uid);
     } catch (error) {
       console.error('Error removing item:', error);
@@ -197,6 +207,8 @@ export default function Home() {
     try {
       const docRef = doc(collection(firestore, 'inventory', user.uid, 'items'), item.name);
       await deleteDoc(docRef);
+      setSnackbarMessage('Item deleted successfully');
+      setSnackbarOpen(true);
       await updateInventory(user.uid);
     } catch (error) {
       console.error('Error deleting item:', error);
@@ -247,6 +259,8 @@ export default function Home() {
         quantity: editItem.quantity,
       });
       handleEditClose();
+      setSnackbarMessage('Item updated successfully');
+      setSnackbarOpen(true);
       await updateInventory(user.uid);
     } catch (error) {
       console.error('Error updating item:', error);
@@ -271,6 +285,8 @@ export default function Home() {
     try {
       await createUserWithEmailAndPassword(auth, email, password);
       console.log('User signed up successfully');
+      setSnackbarMessage('Signed up successfully');
+      setSnackbarOpen(true);
     } catch (error) {
       console.error('Error signing up:', error);
     }
@@ -280,6 +296,8 @@ export default function Home() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
       console.log('User signed in successfully');
+      setSnackbarMessage('Signed in successfully');
+      setSnackbarOpen(true);
     } catch (error) {
       console.error('Error signing in:', error);
     }
@@ -289,6 +307,8 @@ export default function Home() {
     try {
       await signOut(auth);
       console.log('User signed out successfully');
+      setSnackbarMessage('Signed out successfully');
+      setSnackbarOpen(true);
     } catch (error) {
       console.error('Error signing out:', error);
     }
@@ -296,6 +316,10 @@ export default function Home() {
 
   const toggleDrawer = () => {
     setDrawerOpen(!drawerOpen);
+  };
+
+  const handleSnackbarClose = () => {
+    setSnackbarOpen(false);
   };
 
   const filteredInventory = inventory
@@ -346,7 +370,7 @@ export default function Home() {
         <AppBar position="static">
           <Toolbar>
             {isMobile && (
-              <IconButton color="inherit" edge="start" onClick={toggleDrawer}>
+              <IconButton color="inherit" edge="start" onClick={toggleDrawer} aria-label="menu">
                 <MenuIcon />
               </IconButton>
             )}
@@ -377,6 +401,7 @@ export default function Home() {
                     size="small"
                     fullWidth
                     sx={{ bgcolor: 'background.paper' }}
+                    aria-label="email"
                   />
                 </Grid>
                 <Grid item xs={12} sm={4}>
@@ -391,6 +416,7 @@ export default function Home() {
                     size="small"
                     fullWidth
                     sx={{ bgcolor: 'background.paper' }}
+                    aria-label="password"
                   />
                 </Grid>
                 <Grid item xs={12} sm={2}>
@@ -431,6 +457,7 @@ export default function Home() {
                         size="small"
                         fullWidth
                         sx={{ bgcolor: 'background.paper' }}
+                        aria-label="email"
                       />
                     </ListItem>
                     <ListItem>
@@ -445,6 +472,7 @@ export default function Home() {
                         size="small"
                         fullWidth
                         sx={{ bgcolor: 'background.paper' }}
+                        aria-label="password"
                       />
                     </ListItem>
                     <ListItem button onClick={handleSignIn}>
@@ -470,6 +498,7 @@ export default function Home() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   sx={{ bgcolor: 'background.paper', width: { xs: '100%', sm: '50%' } }}
+                  aria-label="search items"
                 />
                 <FormControl variant="outlined" sx={{ minWidth: 200, bgcolor: 'background.paper' }}>
                   <InputLabel id="filter-category-label">Filter by Category</InputLabel>
@@ -479,6 +508,7 @@ export default function Home() {
                     value={filterCategory}
                     onChange={(e) => setFilterCategory(e.target.value)}
                     label="Filter by Category"
+                    aria-label="filter by category"
                   >
                     <MenuItem value="">
                       <em>All</em>
@@ -492,10 +522,10 @@ export default function Home() {
                 </FormControl>
               </Stack>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} width="100%" justifyContent="center" alignItems="center">
-                <Button variant="contained" onClick={handleOpen} startIcon={<Add />}>
+                <Button variant="contained" onClick={handleOpen} startIcon={<Add />} sx={{ minWidth: 150 }}>
                   Add New Item
                 </Button>
-                <Button variant="contained" onClick={exportToCSV} startIcon={<GetApp />}>
+                <Button variant="contained" onClick={exportToCSV} startIcon={<GetApp />} sx={{ minWidth: 150 }}>
                   Export to CSV
                 </Button>
               </Stack>
@@ -531,19 +561,19 @@ export default function Home() {
                         </TableCell>
                         <TableCell align="center">
                           <Stack direction="row" justifyContent="center" spacing={1}>
-                            <IconButton color="primary" onClick={() => addItem(item)}>
+                            <IconButton color="primary" onClick={() => addItem(item)} aria-label="increase quantity">
                               <Add />
                             </IconButton>
-                            <IconButton color="secondary" onClick={() => removeItem(item)}>
+                            <IconButton color="secondary" onClick={() => removeItem(item)} aria-label="decrease quantity">
                               <Remove />
                             </IconButton>
-                            <IconButton color="error" onClick={() => deleteItem(item)}>
+                            <IconButton color="error" onClick={() => deleteItem(item)} aria-label="delete item">
                               <Delete />
                             </IconButton>
-                            <IconButton color="default" onClick={() => handleEditOpen(item)}>
+                            <IconButton color="default" onClick={() => handleEditOpen(item)} aria-label="edit item">
                               <Edit />
                             </IconButton>
-                            <IconButton color="default" onClick={() => handleViewOpen(item)}>
+                            <IconButton color="default" onClick={() => handleViewOpen(item)} aria-label="view item">
                               <Visibility />
                             </IconButton>
                           </Stack>
@@ -585,6 +615,7 @@ export default function Home() {
                 fullWidth
                 value={itemName}
                 onChange={(e) => setItemName(e.target.value)}
+                aria-label="item name"
               />
               <FormControl fullWidth>
                 <InputLabel id="category-label">Category</InputLabel>
@@ -594,6 +625,7 @@ export default function Home() {
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   label="Category"
+                  aria-label="category"
                 >
                   <MenuItem value="Food">Food</MenuItem>
                   <MenuItem value="Beverage">Beverage</MenuItem>
@@ -609,6 +641,7 @@ export default function Home() {
                 fullWidth
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+                aria-label="description"
               />
               <TextField
                 id="outlined-price"
@@ -617,6 +650,7 @@ export default function Home() {
                 fullWidth
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
+                aria-label="price"
               />
               <TextField
                 id="outlined-supplier"
@@ -625,6 +659,7 @@ export default function Home() {
                 fullWidth
                 value={supplier}
                 onChange={(e) => setSupplier(e.target.value)}
+                aria-label="supplier"
               />
               <Button
                 variant="contained"
@@ -647,14 +682,15 @@ export default function Home() {
                     setError('Please provide both item name and category.');
                   }
                 }}
+                sx={{ minWidth: 150 }}
               >
                 Add
               </Button>
             </Stack>
           </Box>
         </Modal>
-        <Dialog open={editOpen} onClose={handleEditClose}>
-          <DialogTitle>Edit Item</DialogTitle>
+        <Dialog open={editOpen} onClose={handleEditClose} aria-labelledby="edit-item-title">
+          <DialogTitle id="edit-item-title">Edit Item</DialogTitle>
           <DialogContent>
             {error && <Alert severity="error">{error}</Alert>}
             <Stack width="100%" direction="column" spacing={2}>
@@ -665,6 +701,7 @@ export default function Home() {
                 fullWidth
                 value={itemName}
                 onChange={(e) => setItemName(e.target.value)}
+                aria-label="edit item name"
               />
               <FormControl fullWidth>
                 <InputLabel id="edit-category-label">Category</InputLabel>
@@ -674,6 +711,7 @@ export default function Home() {
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
                   label="Category"
+                  aria-label="edit category"
                 >
                   <MenuItem value="Food">Food</MenuItem>
                   <MenuItem value="Beverage">Beverage</MenuItem>
@@ -689,6 +727,7 @@ export default function Home() {
                 fullWidth
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+                aria-label="edit description"
               />
               <TextField
                 id="edit-price"
@@ -697,6 +736,7 @@ export default function Home() {
                 fullWidth
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
+                aria-label="edit price"
               />
               <TextField
                 id="edit-supplier"
@@ -705,6 +745,7 @@ export default function Home() {
                 fullWidth
                 value={supplier}
                 onChange={(e) => setSupplier(e.target.value)}
+                aria-label="edit supplier"
               />
             </Stack>
           </DialogContent>
@@ -713,8 +754,8 @@ export default function Home() {
             <Button onClick={handleEditSave} color="primary">Save</Button>
           </DialogActions>
         </Dialog>
-        <Dialog open={viewOpen} onClose={handleViewClose}>
-          <DialogTitle>View Item Details</DialogTitle>
+        <Dialog open={viewOpen} onClose={handleViewClose} aria-labelledby="view-item-title">
+          <DialogTitle id="view-item-title">View Item Details</DialogTitle>
           <DialogContent>
             {viewItem && (
               <Stack width="100%" direction="column" spacing={2}>
@@ -731,7 +772,14 @@ export default function Home() {
             <Button onClick={handleViewClose} color="primary">Close</Button>
           </DialogActions>
         </Dialog>
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={6000}
+          onClose={handleSnackbarClose}
+          message={snackbarMessage}
+        />
       </Box>
     </ThemeProvider>
   );
 }
+
