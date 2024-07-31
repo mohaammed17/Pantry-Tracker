@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Camera } from 'react-camera-pro';
-import { Button, Box, Typography, IconButton } from '@mui/material';
+import { Button, Box, Typography, IconButton, Alert } from '@mui/material';
 import { FlipCameraAndroid } from '@mui/icons-material';
 import axios from 'axios';
 
@@ -10,14 +10,24 @@ const CameraCapture = ({ onCapture }) => {
   const [labels, setLabels] = useState([]);
   const [numberOfCameras, setNumberOfCameras] = useState(0);
   const [currentCamera, setCurrentCamera] = useState(0);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    if (camera.current) {
-      camera.current.switchCamera(currentCamera);
+    if (camera.current && numberOfCameras > 1) {
+      try {
+        camera.current.switchCamera(currentCamera);
+      } catch (e) {
+        setError('Unable to switch camera. Please try a different browser or device.');
+      }
     }
-  }, [currentCamera]);
+  }, [currentCamera, numberOfCameras]);
 
   const takePicture = async () => {
+    if (!camera.current) {
+      setError('No camera device accessible. Please connect your camera or try a different browser.');
+      return;
+    }
+
     const picture = camera.current.takePhoto();
     setImage(picture);
     onCapture(picture);
@@ -39,11 +49,16 @@ const CameraCapture = ({ onCapture }) => {
   };
 
   const switchCamera = () => {
-    setCurrentCamera((prevCamera) => (prevCamera + 1) % numberOfCameras);
+    if (numberOfCameras > 1) {
+      setCurrentCamera((prevCamera) => (prevCamera + 1) % numberOfCameras);
+    } else {
+      setError('No additional cameras available.');
+    }
   };
 
   return (
     <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center">
+      {error && <Alert severity="error">{error}</Alert>}
       <Camera
         ref={camera}
         numberOfCamerasCallback={setNumberOfCameras}
