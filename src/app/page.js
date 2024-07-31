@@ -33,6 +33,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Grid,
 } from '@mui/material';
 import { Add, Remove, Delete, Edit, Visibility, GetApp } from '@mui/icons-material';
 import { firestore, auth } from './firebase'; // Adjust the path if necessary
@@ -79,7 +80,8 @@ const style = {
   top: '50%',
   left: '50%',
   transform: 'translate(-50%, -50%)',
-  width: 400,
+  width: '90%',
+  maxWidth: 400,
   bgcolor: 'background.paper',
   borderRadius: 3,
   boxShadow: 24,
@@ -344,50 +346,60 @@ export default function Home() {
                 </Menu>
               </>
             ) : (
-              <>
-                <TextField
-                  id="email"
-                  label="Email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  margin="normal"
-                  variant="outlined"
-                  size="small"
-                  sx={{ bgcolor: 'background.paper' }}
-                />
-                <TextField
-                  id="password"
-                  label="Password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  margin="normal"
-                  variant="outlined"
-                  size="small"
-                  sx={{ bgcolor: 'background.paper' }}
-                />
-                <Button color="inherit" onClick={handleSignIn}>
-                  Sign In
-                </Button>
-                <Button color="inherit" onClick={handleSignUp}>
-                  Sign Up
-                </Button>
-              </>
+              <Grid container spacing={1}>
+                <Grid item xs={12} sm={4}>
+                  <TextField
+                    id="email"
+                    label="Email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    margin="normal"
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    sx={{ bgcolor: 'background.paper' }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <TextField
+                    id="password"
+                    label="Password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    margin="normal"
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    sx={{ bgcolor: 'background.paper' }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={2}>
+                  <Button color="inherit" onClick={handleSignIn} fullWidth>
+                    Sign In
+                  </Button>
+                </Grid>
+                <Grid item xs={12} sm={2}>
+                  <Button color="inherit" onClick={handleSignUp} fullWidth>
+                    Sign Up
+                  </Button>
+                </Grid>
+              </Grid>
             )}
           </Toolbar>
         </AppBar>
         <Container sx={{ mt: 4, mb: 4 }}>
           {user ? (
             <Box display="flex" justifyContent="center" alignItems="center" flexDirection="column" gap={2}>
-              <Stack direction="row" spacing={2} width="100%" justifyContent="center" alignItems="center">
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} width="100%" justifyContent="center" alignItems="center">
                 <TextField
                   id="search"
                   label="Search Items"
                   variant="outlined"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  sx={{ bgcolor: 'background.paper', width: '50%' }}
+                  sx={{ bgcolor: 'background.paper', width: { xs: '100%', sm: '50%' } }}
                 />
                 <FormControl variant="outlined" sx={{ minWidth: 200, bgcolor: 'background.paper' }}>
                   <InputLabel id="filter-category-label">Filter by Category</InputLabel>
@@ -409,7 +421,7 @@ export default function Home() {
                   </Select>
                 </FormControl>
               </Stack>
-              <Stack direction="row" spacing={2} width="100%" justifyContent="center" alignItems="center">
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} width="100%" justifyContent="center" alignItems="center">
                 <Button variant="contained" onClick={handleOpen} startIcon={<Add />}>
                   Add New Item
                 </Button>
