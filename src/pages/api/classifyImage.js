@@ -5,8 +5,17 @@ import path from 'path';
 import { firestore } from '../../app/firebase'; // Adjusted the path
 import { doc, setDoc, collection } from 'firebase/firestore';
 
-// Ensure the GOOGLE_APPLICATION_CREDENTIALS environment variable is set
-process.env.GOOGLE_APPLICATION_CREDENTIALS = 'C:/Users/mnalw/Downloads/Headstarter AI/Project 2 Pantry Tracker/pantry-tracker-431112-f15382db7412.json';
+// Decode the base64-encoded service account key and write it to a file
+if (process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64) {
+  const keyFilePath = path.join('/tmp', 'gcloud-key.json');
+  fs.writeFileSync(
+    keyFilePath,
+    Buffer.from(process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64, 'base64').toString('utf8')
+  );
+  process.env.GOOGLE_APPLICATION_CREDENTIALS = keyFilePath;
+} else if (!fs.existsSync(process.env.GOOGLE_APPLICATION_CREDENTIALS)) {
+  console.error('Environment variable GOOGLE_APPLICATION_CREDENTIALS_BASE64 not found.');
+}
 
 const client = new ImageAnnotatorClient();
 
