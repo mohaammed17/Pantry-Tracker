@@ -25,26 +25,37 @@ const CameraCapture = ({ onCapture }) => {
   const takePicture = async () => {
     if (!camera.current) {
       setError('No camera device accessible. Please connect your camera or try a different browser.');
+      console.error('No camera device accessible.');
       return;
     }
 
-    const picture = camera.current.takePhoto();
-    setImage(picture);
-    onCapture(picture);
-
-    const formData = new FormData();
-    formData.append('image', picture);
-
     try {
-      const response = await axios.post('/api/classifyImage', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      console.log('Taking picture...');
+      const picture = camera.current.takePhoto();
+      console.log('Picture taken:', picture);
 
-      setLabels(response.data.labels);
-    } catch (error) {
-      console.error('Error classifying image:', error);
+      if (picture) {
+        setImage(picture);
+
+        // Convert base64 to Blob
+        const byteString = atob(picture.split(',')[1]);
+        const mimeString = picture.split(',')[0].split(':')[1].split(';')[0];
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i++) {
+          ia[i] = byteString.charCodeAt(i);
+        }
+        const blob = new Blob([ab], { type: mimeString });
+
+        // Send the Blob to the handler
+        onCapture(blob);
+      } else {
+        setError('Failed to take picture. Please try again.');
+        console.error('Failed to take picture.');
+      }
+    } catch (e) {
+      setError('Error capturing image: ' + e.message);
+      console.error('Error capturing image:', e);
     }
   };
 

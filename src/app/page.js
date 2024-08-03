@@ -57,6 +57,7 @@ import {
   signOut,
   onAuthStateChanged,
 } from 'firebase/auth';
+import axios from 'axios';
 import CameraCapture from './CameraCapture';
 
 const theme = createTheme({
@@ -153,25 +154,38 @@ export default function Home() {
       });
       setTotalItems(inventoryList.length);
       setInventory(inventoryList);
+      console.log('Inventory updated:', inventoryList);
     } catch (error) {
       console.error('Error fetching inventory:', error);
     }
   };
 
   const addItem = async (item) => {
-    if (!user) return;
-    if (!category) {
-      setError('Please select a category.');
+    console.log('addItem function called with item:', item);
+    if (!user) {
+      console.log('No user logged in');
       return;
     }
     try {
+      console.log('Adding item:', item);
       const docRef = doc(collection(firestore, 'inventory', user.uid, 'items'), item.name);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
-        const { quantity } = docSnap.data();
-        await setDoc(docRef, { ...item, quantity: quantity + 1 });
+        const existingItem = docSnap.data();
+        console.log('Existing item found:', existingItem);
+        const updatedItem = {
+          ...existingItem,
+          quantity: existingItem.quantity + 1,
+        };
+        await setDoc(docRef, updatedItem, { merge: true });
+        console.log('Item updated:', updatedItem);
       } else {
-        await setDoc(docRef, { ...item, quantity: 1 });
+        const newItem = {
+          ...item,
+          quantity: 1,
+        };
+        await setDoc(docRef, newItem);
+        console.log('New item added:', newItem);
       }
       setError('');
       setSnackbarMessage('Item added successfully');
@@ -186,6 +200,7 @@ export default function Home() {
   const removeItem = async (item) => {
     if (!user) return;
     try {
+      console.log('Removing item:', item);
       const docRef = doc(collection(firestore, 'inventory', user.uid, 'items'), item.name);
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
@@ -207,6 +222,7 @@ export default function Home() {
   const deleteItem = async (item) => {
     if (!user) return;
     try {
+      console.log('Deleting item:', item);
       const docRef = doc(collection(firestore, 'inventory', user.uid, 'items'), item.name);
       await deleteDoc(docRef);
       setSnackbarMessage('Item deleted successfully');
@@ -332,10 +348,38 @@ export default function Home() {
     setCameraOpen(false);
   };
 
-  const handleCapture = (image) => {
+  const handleCapture = async (image) => {
     console.log('Captured image:', image);
-    handleCameraClose();
-    // Process the captured image as needed
+    setCameraOpen(false);
+
+    try {
+      const formData = new FormData();
+      formData.append('image', image, 'image.png');
+
+      const response = await axios.post('/api/classifyImage', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (response.data && response.data.labels) {
+        const labels = response.data.labels;
+
+        // Extract item details from labels or set default values
+        const itemName = labels[0] || 'Unknown Item';
+        const category = labels[1] || 'Uncategorized';
+        const description = 'Detected via image capture';
+        const price = '';
+
+        const item = { name: itemName, category, description, price, supplier: '' };
+
+        await addItem(item);
+      } else {
+        console.error('No labels received from the server.');
+      }
+    } catch (error) {
+      console.error('Error processing captured image:', error);
+    }
   };
 
   const filteredInventory = inventory
@@ -580,7 +624,10 @@ export default function Home() {
                         </TableCell>
                         <TableCell align="center">
                           <Stack direction="row" justifyContent="center" spacing={1}>
-                            <IconButton color="primary" onClick={() => addItem(item)} aria-label="increase quantity">
+                            <IconButton color="primary" onClick={() => {
+                              console.log('Add button clicked for item:', item);
+                              addItem(item);
+                            }} aria-label="increase quantity">
                               <Add />
                             </IconButton>
                             <IconButton color="secondary" onClick={() => removeItem(item)} aria-label="decrease quantity">
