@@ -2,10 +2,9 @@ import { ImageAnnotatorClient } from '@google-cloud/vision';
 import formidable from 'formidable';
 import fs from 'fs';
 import path from 'path';
-import { firestore } from '../../app/firebase'; // Adjusted the path
+import { firestore } from '../../app/firebase';
 import { doc, setDoc, collection } from 'firebase/firestore';
 
-// Decode the base64-encoded service account key and write it to a file
 if (process.env.GOOGLE_APPLICATION_CREDENTIALS_BASE64) {
   const keyFilePath = path.join('/tmp', 'gcloud-key.json');
   fs.writeFileSync(
@@ -48,13 +47,9 @@ const handler = async (req, res) => {
   try {
     const { files } = await parseForm(req);
 
-    // Check files object structure
     console.log('Files:', files);
-
-    // Extract the file path
     const imagePath = files.image[0]?.filepath;
 
-    // Log the image path
     console.log('Image Path:', imagePath);
 
     if (!imagePath) {
@@ -67,7 +62,6 @@ const handler = async (req, res) => {
 
       console.log('Labels detected:', labels);
 
-      // Store the labels in Firestore
       const itemDocRef = doc(collection(firestore, 'inventory', 'detectedItems', 'items'));
       await setDoc(itemDocRef, { labels });
 
